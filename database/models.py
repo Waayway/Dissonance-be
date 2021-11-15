@@ -1,40 +1,37 @@
-from peewee import ForeignKeyField, Model, ModelBase, CharField, ManyToManyField
-from peewee import SqliteDatabase
+import peewee
+from .database import db
 
-db = SqliteDatabase("sqlite.db")
-
-class User(Model):
-    username = CharField()
-    password = CharField()
-    
+class baseModel(peewee.ModelBase):
     class Meta:
         database = db
-    
-    def get_servers(self):
-        return (User.get(User == self).servers.order_by(Server.id))
-    
 
-class Server(Model):
-    name = CharField()
-    description = CharField()
-    people = ManyToManyField(User, backref="servers")
+class User(baseModel):
+    username = peewee.CharField(unique=True)
+    password = peewee.CharField()
+    email = peewee.CharField(unique=True)
+    server_ids = peewee.ManyToManyField()
 
-    class Meta:
-        database = db
-    
-    def get_chatrooms(self):
-        return (Chatroom.select().join(Server).where(Server == self))
+class Server(baseModel):
+    title = peewee.CharField()
+    icon = peewee.CharField()
+    chatroom_ids = peewee.ManyToManyField()
 
-Server.people.get_through_model()
+class Chatroom(baseModel):
+    title = peewee.CharField()
+    description = peewee.CharField()
+    Server_id = peewee.ForeignKeyField()
+    message_ids = peewee.ManyToManyField()
 
-class Chatroom(Model):
-    name = CharField()
-    description = CharField
-    Server = ForeignKeyField(Server, backref="chats")
+class Message(baseModel):
+    content = peewee.CharField()
+    date_time = peewee.DateTimeField()
+    sender_id = peewee.ForeignKeyField()
+    chatroom_id = peewee.ForeignKeyField()
 
-    class Meta:
-        database = db
-        
-def create_tables():
-    with db:
-        db.create_tables([User,Server,Chatroom])
+User.server_ids.model = Server
+Server.chatroom_ids.model = Chatroom
+Chatroom.message_ids.model = Message
+Chatroom.Server_id.model = Server
+Message.sender_id.model = User
+Message.chatroom_id.model = Chatroom
+
