@@ -9,8 +9,12 @@ async def get_user_by_name(name):
 
 @fba.handle_create_user
 async def create_user(username,password):
-    password =  await fba.call_config('get_password_hash', password),
-    return password
+    user = {
+        "username": username,
+        "password": await fba.call_config('get_password_hash', password),
+    }
+
+    return user
 
 @router.get("/users/", tags=["users"])
 async def read_users():

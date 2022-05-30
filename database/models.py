@@ -1,37 +1,43 @@
+from datetime import datetime
 import peewee
+import uuid
 from .database import db
 
-class baseModel(peewee.ModelBase):
+def uuid_gen():
+    return str(uuid.uuid4())
+
+class baseModel(peewee.Model):
     class Meta:
         database = db
-
+    
 class User(baseModel):
-    username = peewee.CharField(unique=True)
-    password = peewee.CharField()
+    id = peewee.CharField(unique=True, default=uuid_gen)
+    username = peewee.CharField()
     email = peewee.CharField(unique=True)
-    server_ids = peewee.ManyToManyField()
+    password = peewee.CharField()
+    friend_ids = peewee.TextField()
 
 class Server(baseModel):
+    id = peewee.CharField(unique=True, default=uuid_gen)
     title = peewee.CharField()
-    icon = peewee.CharField()
-    chatroom_ids = peewee.ManyToManyField()
+    icon = peewee.CharField(null=True)
+    users = peewee.ForeignKeyField(User, backref="servers")
 
-class Chatroom(baseModel):
+class Chat(baseModel):
+    id = peewee.CharField(unique=True, default=uuid_gen)
     title = peewee.CharField()
     description = peewee.CharField()
-    Server_id = peewee.ForeignKeyField()
-    message_ids = peewee.ManyToManyField()
+    server_id = peewee.ForeignKeyField(Server,backref="chats")
+    permission = peewee.CharField(null=True)
 
 class Message(baseModel):
+    id = peewee.CharField(unique=True, default=uuid_gen)
     content = peewee.CharField()
-    date_time = peewee.DateTimeField()
-    sender_id = peewee.ForeignKeyField()
-    chatroom_id = peewee.ForeignKeyField()
+    send_time = peewee.DateTimeField(default=datetime.now)
+    sender = peewee.ForeignKeyField(User)
+    chat_id = peewee.ForeignKeyField(Chat,backref="messages")
 
-User.server_ids.model = Server
-Server.chatroom_ids.model = Chatroom
-Chatroom.message_ids.model = Message
-Chatroom.Server_id.model = Server
-Message.sender_id.model = User
-Message.chatroom_id.model = Chatroom
 
+def create_tables():
+    with db:
+        db.create_tables([User,Server,Chat,Message])
