@@ -1,5 +1,5 @@
 import os
-from passlib.hash import bcrypt_sha256
+from passlib.hash import bcrypt
 from . import models, schemas
 from .models import *
 
@@ -13,7 +13,7 @@ def get_user(user_id: str):
     return schemas.User.from_orm(User.select().where(User.id == user_id).get())
 
 def get_user_by_username(username: str):
-    return schemas.User.from_orm(User.select().where(User.username == username))
+    return schemas.User.from_orm(User.select().where(User.username == username).get())
 
 def get_user_by_email(email: str):
     return schemas.User.from_orm(User.select().where(User.email == email).get())
@@ -25,13 +25,15 @@ def get_user_by_name_with_password(name: str):
     return schemas.UserCreate.from_orm(user)
 
 ##
-## Create User
+## Create and Delete User
 ## 
 def create_user(user: schemas.UserCreate):
-    password = bcrypt_sha256(str(user.password)+SECRET_KEY)
+    password = bcrypt.hash(str(user.password)+SECRET_KEY)
     db_user = User.create(username=user.username, email=user.email, password=password)
     return schemas.User.from_orm(db_user)
 
+def delete_user(user_id: str):
+    User.delete().where(User.id == user_id).execute()
 ##
 ## Get server by x
 ##
@@ -65,7 +67,8 @@ def get_chat_by_title(chat_title: str):
 ## creating and deleting chats
 ##
 def create_chat(chat: schemas.ChatroomCreate):
-    chat_db = Chat.create(title=chat.title, description=chat.description, server_id=chat.server_id)
+    server_db = Server.select().where(Server.id == chat.server.id).get()
+    chat_db = Chat.create(title=chat.title, description=chat.description, server=server_db)
     return schemas.Chatroom.from_orm(chat_db)
 
 def delete_chat(chat_id: str):
@@ -84,4 +87,10 @@ def get_messages_by_chat(chat_id: str):
 ## Create and delete message
 ##
 def create_message(message: schemas.MessageCreate):
-    Message.create(content=message.content, sender=message.sender_id, chat_id=message.chat_id)
+    sender = User.select().where(User.id == message.sender.id).get()
+    chat = Chat.select().where(Chat.id == message.chat.id).get()
+    message_db = Message.create(content=message.content, sender=sender, chat=chat)
+    return schemas.Message.from_orm(message_db)
+
+def delete_message(message_id: str):
+    Message.delete().where(Message.id == message_id).execute()

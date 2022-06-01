@@ -1,5 +1,6 @@
-from typing import Any, List, Optional
+from typing import Any, ForwardRef, List, Optional
 from datetime import date
+from uuid import UUID
 import peewee
 from pydantic import BaseModel
 from pydantic.utils import GetterDict
@@ -12,54 +13,76 @@ class PeeweeGetterDict(GetterDict):
             return list(res)
         return res
 
+class baseModel(BaseModel):
+    class Config:
+        orm_mode=True
+        getter_dict=PeeweeGetterDict
+
+
 #
 # Message
 #
-class MessageBase(BaseModel):
+chat = ForwardRef('ChatroomWithoutMessages')
+user = ForwardRef('User')
+class MessageBase(baseModel):
     content: str
-    sender_id: str
-    chat_id: str
+    sender: user
+    chat: chat
 
 class MessageCreate(MessageBase):
     pass
 
 class Message(MessageBase):
+    id: UUID
     send_time: date
 
 #
 # Chatroom
 #
-class ChatroomBase(BaseModel):
+server = ForwardRef('ServerWithoutChats')
+class ChatroomBase(baseModel):
     title: str
     description: str
-    server_id: str
-    permission: str = None
+    server: server
+    
 
 class ChatroomCreate(ChatroomBase):
     pass
+class ChatroomWithoutMessages(ChatroomBase):
+    id: UUID
+    permission: str = None
 
 class Chatroom(ChatroomBase):
-    pass
-
+    id: UUID
+    messages: list[Message]
+    permission: str = None
 #
 # Server
 #
-class ServerBase(BaseModel):
+class ServerBase(baseModel):
     title: str
 
 class ServerCreate(ServerBase):
     pass
 
+class ServerWithoutChats(ServerBase):
+    id: UUID
+    icon: str = None
+    users: List[str] = None
+
 class Server(ServerBase):
+    id: UUID
     icon: str = None
     chats: List[Chatroom] = None
     users: List[str] = None
 
 
+
+
 #
 # User
 #
-class Userbase(BaseModel):
+class Userbase(baseModel):
     email: str
     username: str
 
@@ -67,8 +90,21 @@ class UserCreate(Userbase):
     password: str
 
 class User(Userbase):
-    id: int
-    servers: List[Server] = None
+    id: UUID
+    servers: List[ServerWithoutChats] = None
+
+
+update_forward_ref_list = [
+    Chatroom,
+    ChatroomBase,
+    ChatroomCreate,
+    ChatroomWithoutMessages,
+    Message,
+    MessageBase,
+    MessageCreate
+]
+for i in update_forward_ref_list:
+    i.update_forward_refs()
 
 
 
