@@ -1,31 +1,48 @@
-from fastapi import APIRouter
-import fastapi_bearer_auth as fba
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError, jwt
+
+from database import crud, schemas
+import os, json
+
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 router = APIRouter()
 
-@fba.handle_get_user_by_name
-async def get_user_by_name(name):
-    return 'no'
+JWT_SECRET = os.getenv("JWT_SECRET")
+ALGORITHM = "HS256"
 
-@fba.handle_create_user
-async def create_user(username,password):
-    user = {
-        "username": username,
-        "password": await fba.call_config('get_password_hash', password),
-    }
 
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> schemas.User:
+    try:
+        payload = jwt.decode(token,JWT_SECRET,algorithms=[ALGORITHM])
+        user = crud.get_user(payload.get("id"))
+    except:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not logged in")
+    
     return user
 
-@router.get("/users/", tags=["users"])
-async def read_users():
-    return [{"username": "Rick"}, {"username": "Morty"}]
+@router.get('/users/me', response_model=schemas.User)
+async def get_myself(user: str = Depends(get_current_user)):
+    return user
 
+@router.post('/login')
+async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    print(form_data.username, form_data.password)
+    user = crud.authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
 
-@router.get("/users/me", tags=["users"])
-async def read_user_me():
-    return {"username": "fakecurrentuser"}
+    userJSON = json.loads(user.json())
 
+    token = jwt.encode(userJSON, JWT_SECRET)
 
-@router.get("/users/{username}", tags=["users"])
-async def read_user(username: str):
-    return {"username": username}
+    return {'access_token': token, 'token-type': 'bearer'}
+
+@router.post('/users', response_model=schemas.User)
+async def create_user(user: schemas.UserCreate):
+    print(user)
+    user_obj = crud.create_user(user)
+    return user_obj

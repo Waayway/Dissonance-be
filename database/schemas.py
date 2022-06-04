@@ -2,7 +2,7 @@ from typing import Any, ForwardRef, List, Optional
 from datetime import date
 from uuid import UUID
 import peewee
-from pydantic import BaseModel
+from pydantic import BaseModel, Json
 from pydantic.utils import GetterDict
 
 
@@ -55,7 +55,7 @@ class ChatroomWithoutMessages(ChatroomBase):
 class Chatroom(ChatroomBase):
     id: UUID
     messages: list[Message]
-    permission: str = None
+    permission: str | None = None
 #
 # Server
 #
@@ -67,14 +67,15 @@ class ServerCreate(ServerBase):
 
 class ServerWithoutChats(ServerBase):
     id: UUID
-    icon: str = None
-    users: List[str] = None
+    icon: str | None = None
+    users: List[str] | None = None
 
 class Server(ServerBase):
     id: UUID
-    icon: str = None
-    chats: List[Chatroom] = None
-    users: List[str] = None
+    icon: str| None = None
+    chats: List[Chatroom]| None = None
+    users: List[str] | None = None
+    catagories: Json[List[str]]
 
 
 

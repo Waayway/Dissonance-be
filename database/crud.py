@@ -10,16 +10,25 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ##
 
 def get_user(user_id: str):
-    return schemas.User.from_orm(User.select().where(User.id == user_id).get())
+    user = User.filter(User.id == user_id).first()
+    if not user:
+        return None    
+    return schemas.User.from_orm(user)
 
 def get_user_by_username(username: str):
-    return schemas.User.from_orm(User.select().where(User.username == username).get())
+    user = User.filter(User.username == username).first()
+    if not user:
+        return None
+    return schemas.User.from_orm(user)
 
 def get_user_by_email(email: str):
-    return schemas.User.from_orm(User.select().where(User.email == email).get())
+    user = User.filter(User.email == email).first()
+    if not user:
+        return None
+    return schemas.User.from_orm(user)
 
 def get_user_by_name_with_password(name: str):
-    user = User.select().where(User.username == name).get()
+    user = User.filter(User.username == name).first()
     if user is None:
         return user
     return schemas.UserCreate.from_orm(user)
@@ -35,13 +44,30 @@ def create_user(user: schemas.UserCreate):
 def delete_user(user_id: str):
     User.delete().where(User.id == user_id).execute()
 ##
+## Authentication
+##
+def authenticate_user(username: str, password: str):
+    user = get_user_by_name_with_password(username)
+    if not user:
+        return False
+    if not bcrypt.verify(str(password)+SECRET_KEY,user.password):
+        return False
+    return get_user_by_username(username)
+
+##
 ## Get server by x
 ##
 def get_server(server_id: str):
-    return schemas.Server.from_orm(Server.select().where(Server.id == server_id).get())
+    server = Server.filter(Server.id == server_id).first()
+    if not server:
+        return None
+    return schemas.Server.from_orm(server)
 
 def get_server_by_title(server_title: str):
-    return schemas.Server.from_orm(Server.select().where(Server.title == server_title).get())
+    server = Server.filter(Server.title == server_title).first()
+    if not server:
+        return None
+    return schemas.Server.from_orm(server)
 
 ##
 ## Create/delete Server
@@ -58,10 +84,16 @@ def delete_server(server_id: str):
 ## get Chat by x
 ##
 def get_chat(chat_id: str):
-    return schemas.Chatroom.from_orm(Chat.select().where(Chat.id == chat_id).get())
+    chat = Chat.filter(Chat.id == chat_id).first()
+    if not chat:
+        return None
+    return schemas.Chatroom.from_orm(chat)
 
 def get_chat_by_title(chat_title: str):
-    return schemas.Chatroom.from_orm(Chat.select().where(Chat.title == chat_title).get())
+    chat = Chat.filter(Chat.title == chat_title).first()
+    if not chat:
+        return None
+    return schemas.Chatroom.from_orm(chat)
 
 ##
 ## creating and deleting chats
@@ -78,7 +110,10 @@ def delete_chat(chat_id: str):
 ## get Messages by x
 ##
 def get_message(message_id: str):
-    return schemas.Message.from_orm(Message.select().where(Message.id == message_id))
+    message = Message.filter(Message.id == message_id)
+    if not message:
+        return None
+    return schemas.Message.from_orm(message)
 
 def get_messages_by_chat(chat_id: str):
     return Message.select().where(Message.chat_id == chat_id)

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi import responses
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 import users
@@ -9,6 +10,14 @@ create_tables()
 db = get_db()
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def ToDocs():

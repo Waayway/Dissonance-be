@@ -19,12 +19,14 @@ class Server(baseModel):
     title = peewee.CharField()
     icon = peewee.CharField(null=True)
     users = peewee.ManyToManyField(User, backref="servers")
+    catagories = peewee.CharField(default="[]") # AS A JSON LIST
 
 class Chat(baseModel):
     id = peewee.UUIDField(unique=True, primary_key=True, default=uuid.uuid4)
     title = peewee.CharField()
     description = peewee.CharField()
     server = peewee.ForeignKeyField(Server,backref="chats")
+    catagory = peewee.CharField(default="")
     permission = peewee.CharField(null=True)
 
 class Message(baseModel):
