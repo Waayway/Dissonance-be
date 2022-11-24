@@ -30,7 +30,6 @@ async def get_myself(user: str = Depends(get_current_user)):
 
 @router.post('/login')
 async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    print(form_data.username, form_data.password)
     user = crud.authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")

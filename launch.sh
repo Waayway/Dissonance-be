@@ -1,4 +1,6 @@
 #!/bin/bash
+# Clear the screen
+clear
 
 # Load Env files
 

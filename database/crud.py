@@ -55,6 +55,12 @@ def authenticate_user(username: str, password: str):
     return get_user_by_username(username)
 
 ##
+## Modifying UserData
+##
+
+
+
+##
 ## Get server by x
 ##
 def get_server(server_id: str):

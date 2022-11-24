@@ -93,6 +93,7 @@ class UserCreate(Userbase):
 class User(Userbase):
     id: UUID
     servers: List[ServerWithoutChats] = None
+    friend_ids: str = None
 
 
 update_forward_ref_list = [
@@ -106,6 +107,12 @@ update_forward_ref_list = [
 ]
 for i in update_forward_ref_list:
     i.update_forward_refs()
+
+
+# Form data schemas
+
+class addFriendData(BaseModel):
+    friend: User
 
 
 
